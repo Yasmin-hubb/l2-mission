@@ -1,0 +1,360 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<title>L2 Mission Control</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=B612:wght@400;700&family=B612+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  /* The students' copy of the mission-control console: black glass, B612 cockpit type */
+  :root {
+    --bg: #000; --panel: #060a0f; --rule: #1b3345; --text: #e6eef7; --dim: #7690a8;
+    --amber: #ffb547; --cyan: #57d3ff; --red: #ff4a3d; --green: #3ee082; --grey: #3a4652;
+    --sans: "B612", "Segoe UI", system-ui, -apple-system, sans-serif;
+    --mono: "B612 Mono", ui-monospace, Menlo, Consolas, monospace;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--sans); }
+  body { padding: calc(18px + env(safe-area-inset-top, 0px)) 18px calc(28px + env(safe-area-inset-bottom, 0px));
+         max-width: 560px; margin: 0 auto; -webkit-text-size-adjust: 100%; }
+  .top { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+  .eyebrow { font: 700 11px/1.2 var(--sans); letter-spacing: .2em; color: var(--dim); text-transform: uppercase; }
+  .live { font: 700 11px/1 var(--sans); letter-spacing: .16em; text-transform: uppercase; color: var(--dim);
+          display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; }
+  .live i { width: 8px; height: 8px; border-radius: 50%; background: var(--grey); display: inline-block; }
+  .live.on i { background: var(--green); box-shadow: 0 0 8px var(--green); }
+  .live.off i { background: var(--red); }
+  h1 { font: 700 clamp(22px, 7vw, 30px)/1.1 var(--sans); letter-spacing: .05em; text-transform: uppercase;
+       margin: 14px 0 0; text-wrap: balance; }
+  .rule { border: 0; border-top: 1px solid var(--rule); margin: 16px 0; }
+  .label { font: 700 11px/1.2 var(--sans); letter-spacing: .2em; color: var(--dim); text-transform: uppercase; }
+  .clock { font: 400 clamp(64px, 24vw, 104px)/1 var(--mono); letter-spacing: -.01em; margin: 8px 0 2px;
+           font-variant-numeric: tabular-nums; }
+  .sub { color: var(--dim); font: 400 14px/1.45 var(--sans); }
+  .card { background: var(--panel); border: 1px solid var(--rule); padding: 16px; }
+  .me .name { font: 700 22px/1.15 var(--mono); letter-spacing: .02em; }
+  .me .status { display: flex; align-items: center; gap: 10px; margin-top: 10px; font: 700 18px/1.2 var(--mono); }
+  .lamp { width: 12px; height: 12px; border-radius: 2px; background: var(--grey); flex: 0 0 auto; }
+  .me .meta { margin-top: 8px; color: var(--dim); font: 400 14px/1.4 var(--sans); }
+  .linkbtn { background: none; border: 0; color: var(--cyan); font: 700 12px/1 var(--sans); letter-spacing: .14em;
+             text-transform: uppercase; padding: 10px 0 0; cursor: pointer; }
+  .picker { display: grid; gap: 8px; margin-top: 10px; }
+  .picker button { text-align: left; background: var(--panel); color: var(--text); border: 1px solid var(--rule);
+                   font: 700 17px/1 var(--mono); padding: 15px 14px; display: flex; gap: 14px; align-items: center; cursor: pointer; }
+  .picker button b { color: var(--dim); font-weight: 400; min-width: 1ch; }
+  .picker button:active { border-color: var(--cyan); }
+  button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+  .teams { width: 100%; border-collapse: collapse; font: 400 15px/1.3 var(--mono); margin-top: 8px; }
+  .teams td { padding: 9px 0; border-bottom: 1px solid #0e1c27; vertical-align: middle; }
+  .teams td.n { width: 22px; color: var(--dim); }
+  .teams td.st { text-align: right; font-weight: 700; white-space: nowrap; }
+  .teams tr.mine td { color: var(--text); }
+  .teams tr.mine td.nm { color: var(--cyan); }
+  .feed { list-style: none; margin: 8px 0 0; padding: 0; font: 400 14px/1.45 var(--mono); }
+  .feed li { display: grid; grid-template-columns: 7.5ch minmax(0, 1fr); gap: 10px; padding: 6px 0; border-bottom: 1px solid #0e1c27; }
+  .feed li span:first-child { color: var(--dim); }
+  .banner { border: 1px solid currentColor; padding: 16px; margin-top: 16px; text-align: center; }
+  .banner .big { font: 700 22px/1.2 var(--sans); letter-spacing: .08em; text-transform: uppercase; }
+  .banner .who { font: 700 20px/1.2 var(--mono); color: var(--text); margin-top: 8px; }
+  .empty { padding: 40px 0; text-align: center; color: var(--dim); font: 400 16px/1.5 var(--sans); }
+  .toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+           background: #0c1a24; border: 1px solid var(--cyan); color: var(--text); padding: 10px 16px;
+           font: 700 13px/1.2 var(--sans); letter-spacing: .08em; opacity: 0; transition: opacity .3s; pointer-events: none; }
+  .toast.show { opacity: 1; }
+  [hidden] { display: none !important; }
+  @media (prefers-reduced-motion: reduce) { .toast { transition: none; } }
+</style>
+</head>
+<body>
+<div class="top">
+  <div class="eyebrow">MPA &middot; L2 Flight Dynamics</div>
+  <div class="live" id="live"><i></i><span id="liveTxt">Connecting</span></div>
+</div>
+
+<div id="noGame" class="empty" hidden>
+  This page needs the link from the QR code at mission control.<br>Scan it again with your camera.
+</div>
+
+<main id="main">
+  <h1 id="title">Waiting for mission control</h1>
+  <hr class="rule">
+  <div class="label" id="clockLabel">Countdown</div>
+  <div class="clock" id="clock">--:--</div>
+  <div class="sub" id="clockSub">The countdown starts at mission control.</div>
+
+  <div id="bannerBox"></div>
+
+  <hr class="rule">
+  <div class="label">Your team</div>
+  <div class="card me" id="meCard" hidden>
+    <div class="name" id="meName"></div>
+    <div class="status"><span class="lamp" id="meLamp"></span><span id="meStatus"></span></div>
+    <div class="meta" id="meMeta"></div>
+    <button class="linkbtn" id="changeTeam">Change team</button>
+  </div>
+  <div id="pickBox">
+    <div class="sub">Pick your team. You only see your status here: the code is typed at mission control.</div>
+    <div class="picker" id="picker"></div>
+  </div>
+
+  <hr class="rule">
+  <div class="label">All teams</div>
+  <table class="teams" id="teams"></table>
+
+  <hr class="rule">
+  <div class="label">Mission log</div>
+  <ul class="feed" id="feed"></ul>
+  <p class="sub" style="margin-top:18px">Times in the log count from the start of the countdown (T+ minutes:seconds).</p>
+</main>
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+const NTFY = "https://ntfy.sh";
+const params = new URLSearchParams(location.search);
+const hashParams = new URLSearchParams(location.hash.replace(/^#/, ""));
+const game = (params.get("g") || hashParams.get("g") || "").replace(/[^A-Za-z0-9_-]/g, "");
+const $ = id => document.getElementById(id);
+const store = {
+  get(k, d) { try { const v = localStorage.getItem("l2-" + game + "-" + k); return v === null ? d : v; } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem("l2-" + game + "-" + k, v); } catch (e) { /* private window */ } }
+};
+
+let P = null;            // last payload from mission control
+let lastSent = 0;
+let shift = 0;           // phone clock minus mission-control clock, if they differ by more than 3 s
+let lastMsgAt = 0;
+let myTeam = parseInt(store.get("team", "0"), 10) || 0;
+let picking = false;
+
+const COLORS = { READY: "var(--green)", UPLINK: "var(--amber)", DIRECTOR: "var(--amber)", CONFIRMED: "var(--green)",
+                 STANDBY: "var(--grey)", "NOT SOLVED": "var(--grey)" };
+function statusColor(s) {
+  if (!s) return "var(--grey)";
+  if (s.startsWith("LOCKED")) return "var(--red)";
+  if (s.startsWith("LATE")) return "var(--dim)";
+  return COLORS[s] || "var(--dim)";
+}
+function fmt(sec) {
+  sec = Math.max(0, Math.round(sec));
+  return String(Math.floor(sec / 60)).padStart(2, "0") + ":" + String(sec % 60).padStart(2, "0");
+}
+function ordinal(n) {
+  const s = (n % 100 >= 11 && n % 100 <= 13) ? "th" : ({ 1: "st", 2: "nd", 3: "rd" }[n % 10] || "th");
+  return n + s;
+}
+function toast(text) {
+  const t = $("toast"); t.textContent = text; t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 3200);
+}
+
+// ---------------------------------------------------------------------------
+//  Messages from mission control
+// ---------------------------------------------------------------------------
+function handle(ntfyMsg, live) {
+  if (!ntfyMsg || ntfyMsg.event !== "message" || !ntfyMsg.message) return;
+  let p;
+  try { p = JSON.parse(ntfyMsg.message); } catch (e) { return; }
+  if (!p || p.v !== 1 || typeof p.sent !== "number") return;
+  if (live) {
+    const d = Date.now() - p.sent;
+    shift = Math.abs(d) > 3000 ? d - 300 : 0;
+  }
+  lastMsgAt = Date.now();
+  if (p.test) { toast("Test message from mission control received"); }
+  if (!p.state || p.sent < lastSent) return;
+  lastSent = p.sent;
+  P = p;
+  render();
+}
+
+async function pollLatest() {
+  try {
+    const r = await fetch(NTFY + "/" + encodeURIComponent(game) + "/json?poll=1&since=latest", { cache: "no-store" });
+    const text = await r.text();
+    const lines = text.trim().split("\n").filter(Boolean);
+    for (const l of lines) { try { handle(JSON.parse(l), false); } catch (e) { /* skip */ } }
+  } catch (e) { /* offline: try again later */ }
+  updateLive();
+}
+
+let es = null;
+function listen() {
+  if (!("EventSource" in window)) { setInterval(pollLatest, 15000); return; }
+  es = new EventSource(NTFY + "/" + encodeURIComponent(game) + "/sse");
+  es.onopen = () => { pollLatest(); updateLive(); };
+  es.onmessage = ev => { try { handle(JSON.parse(ev.data), true); } catch (e) { /* skip */ } updateLive(); };
+  es.onerror = () => updateLive();
+}
+
+function updateLive() {
+  const el = $("live");
+  const open = es && es.readyState === 1;
+  const fresh = Date.now() - lastMsgAt < 150000;
+  el.className = "live " + (open && (fresh || !P) ? "on" : "off");
+  $("liveTxt").textContent = open ? (P ? "Live" : "Connected") : "Reconnecting";
+}
+
+// ---------------------------------------------------------------------------
+//  Drawing
+// ---------------------------------------------------------------------------
+const TITLES = { standby: "Standby", running: "Conjunction alert", saved: "Collision avoided",
+                 lost: "Mission lost", ended: "Hunt closed" };
+const TITLE_COLORS = { running: "var(--red)", saved: "var(--green)", lost: "var(--red)", ended: "var(--amber)", standby: "var(--text)" };
+
+function clockNow() {
+  if (!P) return { label: "Countdown", text: "--:--", sub: "Waiting for mission control." };
+  const s = P.state;
+  const now = Date.now() - shift;
+  if (s.paused && s.phase !== "ended") return { label: "Countdown paused", text: fmt(s.phase === "saved" ? (s.closesIn || 0) : s.remaining), sub: "Mission control paused the clock." };
+  switch (s.phase) {
+    case "standby": return { label: "Countdown ready", text: fmt(s.duration), sub: "The countdown starts at mission control." };
+    case "running": {
+      const r = (P.endsAt - now) / 1000;
+      return { label: "Time to conjunction", text: fmt(r), sub: r < 60 ? "Last minute!" : "JWST and Euclid are on a collision course. Find the burn code." };
+    }
+    case "saved": {
+      const r = P.closesAt ? (P.closesAt - now) / 1000 : 0;
+      return { label: "Hunt closes in", text: fmt(r), sub: "The collision was avoided. Teams that still crack the code get a place in the ranking." };
+    }
+    case "lost": {
+      const r = P.impactAt ? (now - P.impactAt) / 1000 : 0;
+      return { label: "Time since impact", text: fmt(r), sub: "JWST and Euclid collided. Late codes still count for the ranking." };
+    }
+    case "ended": return { label: "Hunt closed", text: "--:--", sub: "See the ranking below and at mission control." };
+  }
+  return { label: "", text: "--:--", sub: "" };
+}
+
+function tick() {
+  const c = clockNow();
+  $("clockLabel").textContent = c.label;
+  $("clock").textContent = c.text;
+  $("clockSub").textContent = c.sub;
+  const s = P && P.state;
+  if (s && s.phase === "running" && !s.paused) {
+    const r = (P.endsAt - (Date.now() - shift)) / 1000;
+    $("clock").style.color = r <= 60 ? "var(--red)" : (r <= 600 ? "var(--amber)" : "var(--text)");
+  } else {
+    $("clock").style.color = s ? ({ saved: "var(--green)", lost: "var(--red)", ended: "var(--dim)" }[s.phase] || "var(--text)") : "var(--dim)";
+  }
+  // lock countdowns tick on the phone between two messages
+  if (s) {
+    for (const td of document.querySelectorAll("#teams td[data-lock]")) {
+      const left = Math.ceil((P.sent + Number(td.dataset.lock) * 1000 - (Date.now() - shift)) / 1000);
+      td.textContent = left > 0 ? "LOCKED " + fmt(left).replace(/^0/, "") : "READY";
+      td.style.color = left > 0 ? "var(--red)" : "var(--green)";
+    }
+  }
+  if (s && myTeam) {
+    const t = s.teams.find(x => x.n === myTeam);
+    if (t && t.lock > 0 && !t.solved) {
+      const left = Math.ceil((P.sent + t.lock * 1000 - (Date.now() - shift)) / 1000);
+      $("meStatus").textContent = left > 0 ? "LOCKED " + fmt(left).replace(/^0/, "") : "READY";
+      $("meLamp").style.background = left > 0 ? "var(--red)" : "var(--green)";
+      $("meStatus").style.color = left > 0 ? "var(--red)" : "var(--green)";
+    }
+  }
+  updateLive();
+}
+
+function render() {
+  const s = P.state;
+  $("title").textContent = TITLES[s.phase] || s.phase;
+  $("title").style.color = TITLE_COLORS[s.phase] || "var(--text)";
+  // banner
+  const bb = $("bannerBox");
+  bb.innerHTML = "";
+  if (s.winner && (s.phase === "saved" || s.phase === "ended")) {
+    const d = document.createElement("div");
+    d.className = "banner"; d.style.color = "var(--green)";
+    d.innerHTML = '<div class="big">Avoidance burn uploaded by</div><div class="who"></div>';
+    d.querySelector(".who").textContent = s.winner;
+    bb.appendChild(d);
+  } else if (s.phase === "lost" || (s.phase === "ended" && !s.winner)) {
+    const d = document.createElement("div");
+    d.className = "banner"; d.style.color = "var(--red)";
+    d.innerHTML = '<div class="big">JWST and Euclid collided</div>';
+    bb.appendChild(d);
+  }
+  // my team
+  const teams = s.teams || [];
+  if (myTeam && !teams.find(t => t.n === myTeam)) myTeam = 0;
+  const showPicker = picking || !myTeam;
+  $("pickBox").hidden = !showPicker;
+  $("meCard").hidden = showPicker;
+  const pk = $("picker");
+  pk.innerHTML = "";
+  for (const t of teams) {
+    const b = document.createElement("button");
+    b.innerHTML = "<b></b><span></span>";
+    b.querySelector("b").textContent = t.n;
+    b.querySelector("span").textContent = t.name;
+    b.addEventListener("click", () => { myTeam = t.n; store.set("team", String(t.n)); picking = false; render(); });
+    pk.appendChild(b);
+  }
+  if (!teams.length) pk.innerHTML = '<div class="sub">The teams appear here once mission control has set them up.</div>';
+  const me = teams.find(t => t.n === myTeam);
+  if (me && !showPicker) {
+    $("meName").textContent = me.name;
+    $("meStatus").textContent = me.status || "";
+    $("meStatus").style.color = statusColor(me.status);
+    $("meLamp").style.background = statusColor(me.status);
+    let meta = me.tries + (me.tries === 1 ? " wrong try" : " wrong tries");
+    if (me.solved) {
+      meta = me.director ? "You saved JWST and Euclid! Flight director." :
+             (me.late ? "Correct code, after the impact. " : "Burn confirmed. ") + ordinal(me.rank) + " place, after " + fmt(me.time) + ".";
+    } else if (s.phase === "running" || s.phase === "saved" || s.phase === "lost") {
+      meta += ". Wrong codes lock your console for a short time.";
+    }
+    $("meMeta").textContent = meta;
+  }
+  // all teams (sorted by result once someone solved it)
+  const rows = teams.slice();
+  if (s.phase === "ended" || s.phase === "saved" || s.phase === "lost") {
+    rows.sort((a, b) => (b.solved - a.solved) || (a.solved ? a.time - b.time : a.n - b.n));
+  }
+  const tb = $("teams");
+  tb.innerHTML = "";
+  for (const t of rows) {
+    const tr = document.createElement("tr");
+    if (t.n === myTeam) tr.className = "mine";
+    const cells = [["n", t.n], ["nm", t.name], ["st", t.solved ? (t.director ? "DIRECTOR" : (t.late ? "LATE" : "CONFIRMED")) + " " + fmt(t.time) : t.status]];
+    for (const [cls, txt] of cells) {
+      const td = document.createElement("td"); td.className = cls; td.textContent = txt; tr.appendChild(td);
+    }
+    tr.lastChild.style.color = statusColor(t.solved ? (t.director ? "DIRECTOR" : "CONFIRMED") : t.status);
+    if (!t.solved && t.lock > 0) tr.lastChild.dataset.lock = String(t.lock);
+    tb.appendChild(tr);
+  }
+  // log
+  const feed = $("feed");
+  feed.innerHTML = "";
+  for (const e of (s.log || [])) {
+    const li = document.createElement("li");
+    li.innerHTML = "<span></span><span></span>";
+    li.firstChild.textContent = e.met === "--:--" ? "" : "T+" + e.met;
+    li.lastChild.textContent = e.text;
+    feed.appendChild(li);
+  }
+  tick();
+}
+
+$("changeTeam").addEventListener("click", () => { picking = true; if (P) render(); });
+
+if (!game) {
+  $("main").hidden = true;
+  $("noGame").hidden = false;
+  $("live").hidden = true;
+} else {
+  pollLatest();
+  listen();
+  setInterval(tick, 250);
+  setInterval(() => { if (Date.now() - lastMsgAt > 75000) pollLatest(); }, 30000);
+}
+</script>
+</body>
+</html>
