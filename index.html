@@ -18,15 +18,20 @@
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--sans); }
-  body { padding: calc(18px + env(safe-area-inset-top, 0px)) 18px calc(28px + env(safe-area-inset-bottom, 0px));
+  body { padding: calc(16px + env(safe-area-inset-top, 0px)) 18px calc(28px + env(safe-area-inset-bottom, 0px));
          max-width: 560px; margin: 0 auto; -webkit-text-size-adjust: 100%; }
-  .top { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
-  .eyebrow { font: 700 11px/1.2 var(--sans); letter-spacing: .2em; color: var(--dim); text-transform: uppercase; }
-  .live { font: 700 11px/1 var(--sans); letter-spacing: .16em; text-transform: uppercase; color: var(--dim);
+  .top { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  .eyebrow { font: 700 11px/1.3 var(--sans); letter-spacing: .18em; color: var(--dim); text-transform: uppercase; }
+  .tools { display: flex; align-items: center; gap: 12px; }
+  .live { font: 700 11px/1 var(--sans); letter-spacing: .14em; text-transform: uppercase; color: var(--dim);
           display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; }
   .live i { width: 8px; height: 8px; border-radius: 50%; background: var(--grey); display: inline-block; }
   .live.on i { background: var(--green); box-shadow: 0 0 8px var(--green); }
   .live.off i { background: var(--red); }
+  .chip { background: none; border: 1px solid var(--rule); color: var(--dim); font: 700 11px/1 var(--sans);
+          letter-spacing: .12em; text-transform: uppercase; padding: 8px 10px; cursor: pointer; white-space: nowrap; }
+  .chip[aria-pressed="true"] { color: var(--cyan); border-color: #24506a; }
+  .chip.wake { color: var(--amber); border-color: var(--amber); }
   h1 { font: 700 clamp(22px, 7vw, 30px)/1.1 var(--sans); letter-spacing: .05em; text-transform: uppercase;
        margin: 14px 0 0; text-wrap: balance; }
   .rule { border: 0; border-top: 1px solid var(--rule); margin: 16px 0; }
@@ -39,20 +44,25 @@
   .me .status { display: flex; align-items: center; gap: 10px; margin-top: 10px; font: 700 18px/1.2 var(--mono); }
   .lamp { width: 12px; height: 12px; border-radius: 2px; background: var(--grey); flex: 0 0 auto; }
   .me .meta { margin-top: 8px; color: var(--dim); font: 400 14px/1.4 var(--sans); }
+  .me .key { margin-top: 12px; padding-top: 10px; border-top: 1px solid #0e1c27; color: var(--dim);
+             font: 400 13px/1.4 var(--sans); }
+  .me .key b { color: var(--text); font: 700 15px/1 var(--mono); border: 1px solid var(--dim); padding: 2px 7px;
+               margin-left: 4px; }
   .linkbtn { background: none; border: 0; color: var(--cyan); font: 700 12px/1 var(--sans); letter-spacing: .14em;
-             text-transform: uppercase; padding: 10px 0 0; cursor: pointer; }
+             text-transform: uppercase; padding: 12px 0 0; cursor: pointer; }
   .picker { display: grid; gap: 8px; margin-top: 10px; }
   .picker button { text-align: left; background: var(--panel); color: var(--text); border: 1px solid var(--rule);
-                   font: 700 17px/1 var(--mono); padding: 15px 14px; display: flex; gap: 14px; align-items: center; cursor: pointer; }
-  .picker button b { color: var(--dim); font-weight: 400; min-width: 1ch; }
+                   font: 700 17px/1 var(--mono); padding: 16px 14px; cursor: pointer; display: flex;
+                   justify-content: space-between; align-items: center; }
+  .picker button::after { content: "Join"; font: 700 11px/1 var(--sans); letter-spacing: .16em; color: var(--dim);
+                          text-transform: uppercase; }
   .picker button:active { border-color: var(--cyan); }
-  button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+  button:focus-visible, input:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
   .teams { width: 100%; border-collapse: collapse; font: 400 15px/1.3 var(--mono); margin-top: 8px; }
   .teams td { padding: 9px 0; border-bottom: 1px solid #0e1c27; vertical-align: middle; }
-  .teams td.n { width: 22px; color: var(--dim); }
-  .teams td.st { text-align: right; font-weight: 700; white-space: nowrap; }
-  .teams tr.mine td { color: var(--text); }
+  .teams td.st { text-align: right; font-weight: 700; white-space: nowrap; padding-left: 10px; }
   .teams tr.mine td.nm { color: var(--cyan); }
+  .teams tr.mine td.nm::after { content: "  (you)"; color: var(--dim); font-weight: 400; }
   .feed { list-style: none; margin: 8px 0 0; padding: 0; font: 400 14px/1.45 var(--mono); }
   .feed li { display: grid; grid-template-columns: 7.5ch minmax(0, 1fr); gap: 10px; padding: 6px 0; border-bottom: 1px solid #0e1c27; }
   .feed li span:first-child { color: var(--dim); }
@@ -61,17 +71,69 @@
   .banner .who { font: 700 20px/1.2 var(--mono); color: var(--text); margin-top: 8px; }
   .empty { padding: 40px 0; text-align: center; color: var(--dim); font: 400 16px/1.5 var(--sans); }
   .toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(18px + env(safe-area-inset-bottom, 0px));
-           background: #0c1a24; border: 1px solid var(--cyan); color: var(--text); padding: 10px 16px;
-           font: 700 13px/1.2 var(--sans); letter-spacing: .08em; opacity: 0; transition: opacity .3s; pointer-events: none; }
+           width: max-content; max-width: calc(100% - 36px); background: #0c1a24; border: 1px solid var(--cyan);
+           color: var(--text); padding: 11px 16px; font: 700 13px/1.35 var(--sans); letter-spacing: .06em;
+           opacity: 0; transition: opacity .3s; pointer-events: none; z-index: 30; text-align: center; }
   .toast.show { opacity: 1; }
+  /* big messages: rejected / accepted / warnings / collision */
+  .alert { position: fixed; inset: 0; z-index: 40; display: flex; align-items: center; justify-content: center;
+           padding: 28px; text-align: center; cursor: pointer; background: rgba(0, 0, 0, .9); }
+  .alert-in { border: 2px solid var(--c, var(--red)); padding: 28px 22px; width: 100%; max-width: 460px;
+              background: color-mix(in srgb, var(--c, var(--red)) 14%, #000); }
+  .alert-kick { font: 700 12px/1.3 var(--sans); letter-spacing: .22em; color: var(--c, var(--red)); text-transform: uppercase; }
+  .alert-big { font: 700 clamp(30px, 10vw, 44px)/1.05 var(--sans); letter-spacing: .04em; text-transform: uppercase;
+               margin: 12px 0 0; color: var(--text); text-wrap: balance; }
+  .alert-sub { font: 400 16px/1.45 var(--sans); color: var(--text); margin-top: 14px; opacity: .9; }
+  .alert-hint { font: 700 11px/1 var(--sans); letter-spacing: .18em; color: var(--dim); text-transform: uppercase; margin-top: 22px; }
+  .alert.blink .alert-in { animation: blink 1s steps(2, jump-none) infinite; }
+  @keyframes blink { 50% { background: color-mix(in srgb, var(--c, var(--red)) 38%, #000); } }
+  body.siren::before { content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 20;
+                       box-shadow: inset 0 0 90px 10px rgba(255, 50, 40, .55); animation: pulse 1.5s ease-in-out infinite; }
+  @keyframes pulse { 50% { opacity: .25; } }
+  /* the team passcode */
+  .sheet { position: fixed; inset: 0; z-index: 50; background: rgba(0, 0, 0, .86); display: flex; align-items: flex-end;
+           justify-content: center; }
+  .sheet-in { background: var(--panel); border-top: 1px solid var(--cyan); width: 100%; max-width: 560px;
+              padding: 22px 18px calc(24px + env(safe-area-inset-bottom, 0px)); }
+  .sheet h2 { font: 700 20px/1.2 var(--mono); margin: 8px 0 4px; }
+  .pass { width: 100%; margin-top: 16px; background: #000; color: var(--text); border: 1px solid var(--rule);
+          font: 700 34px/1 var(--mono); letter-spacing: .5em; text-align: center; padding: 14px 0 14px .5em; }
+  .pass.bad { border-color: var(--red); animation: shake .3s; }
+  @keyframes shake { 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+  .sheet .err { color: var(--red); font: 700 13px/1.3 var(--sans); min-height: 1.3em; margin-top: 10px; letter-spacing: .04em; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px; }
+  .btn { background: transparent; color: var(--text); border: 1px solid var(--dim); font: 700 13px/1 var(--sans);
+         letter-spacing: .14em; text-transform: uppercase; padding: 15px 10px; cursor: pointer; }
+  .btn.primary { border-color: var(--cyan); color: var(--cyan); }
+  /* the team log: the code so far and notes, shared by the team's phones */
+  .log .field { width: 100%; background: #000; color: var(--text); border: 1px solid var(--rule); border-radius: 0;
+                font: 400 16px/1.4 var(--sans); padding: 12px; -webkit-appearance: none; }
+  .log textarea.field { resize: vertical; min-height: 64px; }
+  .log .codein { font: 700 22px/1.1 var(--mono); letter-spacing: .16em; text-transform: uppercase; }
+  .log .row3 { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; margin-top: 8px; align-items: stretch; }
+  .log .row3 .btn { padding: 0 16px; }
+  .log .meta2 { color: var(--dim); font: 400 12px/1.4 var(--sans); margin-top: 6px; min-height: 1.4em; }
+  .notes { list-style: none; margin: 12px 0 0; padding: 0; }
+  .notes li { border-top: 1px solid #0e1c27; padding: 11px 0; }
+  .notes .by { display: flex; justify-content: space-between; gap: 10px; color: var(--dim);
+               font: 700 11px/1.3 var(--sans); letter-spacing: .14em; text-transform: uppercase; }
+  .notes .tx { margin-top: 5px; font: 400 15px/1.45 var(--sans); white-space: pre-wrap; overflow-wrap: anywhere; }
+  .notes .del { background: none; border: 0; color: var(--dim); font: 700 11px/1 var(--sans); letter-spacing: .14em;
+                text-transform: uppercase; cursor: pointer; padding: 0 0 0 8px; }
+  .notes .wait { color: var(--amber); }
   [hidden] { display: none !important; }
-  @media (prefers-reduced-motion: reduce) { .toast { transition: none; } }
+  @media (prefers-reduced-motion: reduce) {
+    .toast { transition: none; } .alert.blink .alert-in, body.siren::before, .pass.bad { animation: none; }
+  }
 </style>
 </head>
 <body>
 <div class="top">
-  <div class="eyebrow">MPA &middot; L2 Flight Dynamics</div>
-  <div class="live" id="live"><i></i><span id="liveTxt">Connecting</span></div>
+  <div class="eyebrow">IMPRS Garching &middot; Flight Control</div>
+  <div class="tools">
+    <button class="chip" id="sound" aria-pressed="true" hidden>Sound on</button>
+    <div class="live" id="live"><i></i><span id="liveTxt">Connecting</span></div>
+  </div>
 </div>
 
 <div id="noGame" class="empty" hidden>
@@ -93,12 +155,34 @@
     <div class="name" id="meName"></div>
     <div class="status"><span class="lamp" id="meLamp"></span><span id="meStatus"></span></div>
     <div class="meta" id="meMeta"></div>
+    <div class="key" id="meKey"></div>
     <button class="linkbtn" id="changeTeam">Change team</button>
   </div>
   <div id="pickBox">
-    <div class="sub">Pick your team. You only see your status here: the code is typed at mission control.</div>
+    <div class="sub">Pick your team and type its passcode (from the staff). Your codes are typed at mission control; this page shows how your team is doing.</div>
     <div class="picker" id="picker"></div>
   </div>
+
+  <section id="logBox" hidden>
+    <hr class="rule">
+    <div class="label">Team log</div>
+    <div class="card log">
+      <div class="label">Code so far</div>
+      <div class="row3">
+        <input class="field codein" id="codeIn" maxlength="16" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" placeholder="? ? ? ? ? ?" aria-label="Code so far">
+        <button class="btn primary" id="codeSave">Save</button>
+      </div>
+      <div class="meta2" id="codeBy"></div>
+      <div class="label" style="margin-top:14px">Notes</div>
+      <textarea class="field" id="noteIn" rows="2" maxlength="400" placeholder="A clue, where you found it, an idea" aria-label="New note" style="margin-top:8px"></textarea>
+      <div class="row3">
+        <input class="field" id="nameIn" maxlength="14" autocomplete="off" placeholder="Your name" aria-label="Your name">
+        <button class="btn primary" id="noteAdd">Add note</button>
+      </div>
+      <ul class="notes" id="notes"></ul>
+      <div class="meta2" id="logInfo"></div>
+    </div>
+  </section>
 
   <hr class="rule">
   <div class="label">All teams</div>
@@ -107,13 +191,38 @@
   <hr class="rule">
   <div class="label">Mission log</div>
   <ul class="feed" id="feed"></ul>
-  <p class="sub" style="margin-top:18px">Times in the log count from the start of the countdown (T+ minutes:seconds).</p>
+  <p class="sub" style="margin-top:18px">Keep this page open with the sound on: it beeps when a team tries a code and sounds the alarms of mission control. Times in the log count from the start of the countdown.</p>
 </main>
-<div class="toast" id="toast"></div>
+
+<div class="sheet" id="passSheet" hidden>
+  <div class="sheet-in" role="dialog" aria-modal="true" aria-labelledby="passTeam">
+    <div class="label">Team passcode</div>
+    <h2 id="passTeam"></h2>
+    <div class="sub">Four digits, from the staff.</div>
+    <input class="pass" id="passIn" type="tel" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="off" aria-label="Passcode">
+    <div class="err" id="passErr" role="status"></div>
+    <div class="row2">
+      <button class="btn" id="passCancel">Cancel</button>
+      <button class="btn primary" id="passOk">Join</button>
+    </div>
+  </div>
+</div>
+
+<div class="alert" id="alert" hidden role="alertdialog" aria-live="assertive" aria-labelledby="alBig">
+  <div class="alert-in">
+    <div class="alert-kick" id="alKick"></div>
+    <div class="alert-big" id="alBig"></div>
+    <div class="alert-sub" id="alSub"></div>
+    <div class="alert-hint">Tap to close</div>
+  </div>
+</div>
+<div class="toast" id="toast" role="status"></div>
 
 <script>
 "use strict";
 const NTFY = "https://ntfy.sh";
+// team passcodes (as hashes: the staff hand them out with the team numbers)
+const PASS = {"1": "dbb4c964", "2": "c72e484f", "3": "8921a925", "4": "88b0e814", "5": "1db7c876"};
 const params = new URLSearchParams(location.search);
 const hashParams = new URLSearchParams(location.hash.replace(/^#/, ""));
 const game = (params.get("g") || hashParams.get("g") || "").replace(/[^A-Za-z0-9_-]/g, "");
@@ -122,13 +231,167 @@ const store = {
   get(k, d) { try { const v = localStorage.getItem("l2-" + game + "-" + k); return v === null ? d : v; } catch (e) { return d; } },
   set(k, v) { try { localStorage.setItem("l2-" + game + "-" + k, v); } catch (e) { /* private window */ } }
 };
+function fnv(s) {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
+  return ("0000000" + h.toString(16)).slice(-8);
+}
+function passOk(n, code) { return !!PASS[n] && fnv("imprs-l2:" + n + ":" + code) === PASS[n]; }
+
+// ---------------------------------------------------------------------------
+//  Team log: the code so far and notes, shared by the phones of one team. It travels
+//  through ntfy.sh like the rest, but locked with a key made from the team passcode and
+//  on a channel that only that passcode leads to: other teams cannot read it.
+// ---------------------------------------------------------------------------
+const enc = new TextEncoder(), dec = new TextDecoder();
+function b64(buf) { let s = ""; const b = new Uint8Array(buf); for (let i = 0; i < b.length; i++) s += String.fromCharCode(b[i]); return btoa(s); }
+function unb64(s) { const t = atob(s); const b = new Uint8Array(t.length); for (let i = 0; i < t.length; i++) b[i] = t.charCodeAt(i); return b; }
+function clockOf(ms) {
+  if (!ms) return "";
+  const d = new Date(ms);
+  return String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
+}
+function rid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
+const Log = {
+  team: 0, topic: "", key: null, shared: false, notes: {}, del: {}, code: null, pending: [], armed: null,
+  cacheKey() { return "log" + this.team; },
+  async start() {
+    const pass = store.get("pass", "");
+    if (!myTeam || !pass) { this.draw(); return; }
+    if (this.team === myTeam && this.topic) { this.draw(); return; }
+    this.team = myTeam;
+    this.topic = game + "-n" + fnv("imprs-l2-log:" + game + ":" + myTeam + ":" + pass);
+    this.notes = {}; this.del = {}; this.code = null; this.pending = []; this.key = null;
+    try {
+      const c = JSON.parse(store.get(this.cacheKey(), "{}"));
+      this.notes = c.notes || {}; this.del = c.del || {}; this.code = c.code || null; this.pending = c.pending || [];
+    } catch (e) { /* nothing kept yet */ }
+    this.shared = !!(window.crypto && crypto.subtle && window.fetch);
+    if (this.shared) {
+      try {
+        const raw = await crypto.subtle.digest("SHA-256", enc.encode("imprs-l2-log-key:" + game + ":" + myTeam + ":" + pass));
+        this.key = await crypto.subtle.importKey("raw", raw, "AES-GCM", false, ["encrypt", "decrypt"]);
+      } catch (e) { this.shared = false; }
+    }
+    this.draw();
+    if (this.shared) { listen(); await this.history(); this.flush(); }
+  },
+  save() { store.set(this.cacheKey(), JSON.stringify({ notes: this.notes, del: this.del, code: this.code, pending: this.pending })); },
+  async seal(obj) {
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const ct = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, this.key, enc.encode(JSON.stringify(obj)));
+    return JSON.stringify({ v: 2, iv: b64(iv), ct: b64(ct) });
+  },
+  async unseal(text) {
+    const m = JSON.parse(text);
+    if (!m || m.v !== 2) return null;
+    const pt = await crypto.subtle.decrypt({ name: "AES-GCM", iv: unb64(m.iv) }, this.key, unb64(m.ct));
+    return JSON.parse(dec.decode(pt));
+  },
+  apply(e) {
+    if (!e || !e.k) return false;
+    const by = String(e.by || "").slice(0, 14), at = Number(e.at) || 0;
+    if (e.k === "note" && e.id && !this.notes[e.id]) { this.notes[e.id] = { t: String(e.t || "").slice(0, 400), by, at }; return true; }
+    if (e.k === "del" && e.id && !this.del[e.id]) { this.del[e.id] = 1; return true; }
+    if (e.k === "code" && (!this.code || at > this.code.at)) { this.code = { t: String(e.t || "").slice(0, 16), by, at }; return true; }
+    return false;
+  },
+  async receive(msg) {
+    if (!this.key || !msg || msg.event !== "message" || !msg.message) return;
+    try { if (this.apply(await this.unseal(msg.message))) { this.save(); this.draw(); } } catch (e) { /* not for this team */ }
+  },
+  async history() {
+    if (!this.key) return;
+    try {
+      const r = await fetch(NTFY + "/" + encodeURIComponent(this.topic) + "/json?poll=1&since=all", { cache: "no-store" });
+      const lines = (await r.text()).trim().split("\n").filter(Boolean);
+      let changed = false;
+      for (const l of lines) {
+        try { const m = JSON.parse(l); if (m.event === "message" && this.apply(await this.unseal(m.message))) changed = true; } catch (e) { /* skip */ }
+      }
+      if (changed) { this.save(); this.draw(); }
+    } catch (e) { /* offline: the copy on this phone stays */ }
+  },
+  post(entry) {
+    this.apply(entry);
+    if (this.shared) this.pending.push(entry);
+    this.save(); this.draw();
+    this.flush();
+  },
+  async flush() {
+    if (!this.shared || !this.key || this.flushing) return;
+    this.flushing = true;
+    while (this.pending.length) {
+      try {
+        const r = await fetch(NTFY + "/" + encodeURIComponent(this.topic), { method: "POST", body: await this.seal(this.pending[0]) });
+        if (!r.ok) break;
+        this.pending.shift(); this.save();
+      } catch (err) { break; }            // offline: again later
+    }
+    this.flushing = false;
+    this.draw();
+  },
+  draw() {
+    const on = !!(myTeam && this.team === myTeam && !picking && $("meCard") && !$("meCard").hidden);
+    $("logBox").hidden = !on;
+    if (!on) return;
+    const c = this.code;
+    if (document.activeElement !== $("codeIn")) $("codeIn").value = c ? c.t : "";
+    $("codeBy").textContent = c ? "Saved by " + (c.by || "your team") + " at " + clockOf(c.at) : "Nothing saved yet.";
+    if (document.activeElement !== $("nameIn")) $("nameIn").value = store.get("name", "");
+    const waiting = new Set(this.pending.map(p => p.id).filter(Boolean));
+    const list = Object.entries(this.notes).filter(([id]) => !this.del[id]).sort((a, b) => b[1].at - a[1].at);
+    const ul = $("notes");
+    ul.innerHTML = "";
+    for (const [id, n] of list) {
+      const li = document.createElement("li");
+      li.innerHTML = '<div class="by"><span></span><button class="del" type="button">Delete</button></div><div class="tx"></div>';
+      const who = li.querySelector(".by span");
+      who.textContent = (n.by || "Team") + " · " + clockOf(n.at) + (waiting.has(id) ? " · not sent yet" : "");
+      if (waiting.has(id)) who.className = "wait";
+      li.querySelector(".tx").textContent = n.t;
+      const del = li.querySelector(".del");
+      if (this.armed === id) del.textContent = "Sure? Delete";
+      del.addEventListener("click", () => {
+        if (this.armed !== id) { this.armed = id; this.draw(); setTimeout(() => { if (this.armed === id) { this.armed = null; this.draw(); } }, 3000); return; }
+        this.armed = null;
+        this.post({ k: "del", id, at: Date.now() });
+      });
+      ul.appendChild(li);
+    }
+    if (!list.length) {
+      const li = document.createElement("li"); li.className = "sub";
+      li.textContent = "No notes yet. Clues, places, ideas: everyone in your team sees them here.";
+      ul.appendChild(li);
+    }
+    $("logInfo").textContent = this.shared
+      ? "Only your team sees this log (it is locked with your team passcode). It stays on your phone for when you come back to mission control."
+      : "This browser cannot share the log: your notes stay on this phone only.";
+  }
+};
+$("codeSave").addEventListener("click", () => {
+  const t = $("codeIn").value.toUpperCase().replace(/\s+/g, "").slice(0, 16);
+  Log.post({ k: "code", t, by: store.get("name", ""), at: Date.now() });
+  $("codeIn").blur();
+  toast(t ? "Code saved for your team" : "Code cleared");
+});
+$("codeIn").addEventListener("keydown", e => { if (e.key === "Enter") $("codeSave").click(); });
+$("noteAdd").addEventListener("click", () => {
+  const t = $("noteIn").value.trim();
+  if (!t) { $("noteIn").focus(); return; }
+  Log.post({ k: "note", id: rid(), t, by: store.get("name", ""), at: Date.now() });
+  $("noteIn").value = "";
+});
+$("nameIn").addEventListener("input", () => store.set("name", $("nameIn").value.trim().slice(0, 14)));
 
 let P = null;            // last payload from mission control
 let lastSent = 0;
 let shift = 0;           // phone clock minus mission-control clock, if they differ by more than 3 s
 let lastMsgAt = 0;
 let myTeam = parseInt(store.get("team", "0"), 10) || 0;
+if (myTeam && !passOk(myTeam, store.get("pass", ""))) myTeam = 0;
 let picking = false;
+let lastEvent = null, lastBoot = null;
 
 const COLORS = { READY: "var(--green)", UPLINK: "var(--amber)", DIRECTOR: "var(--amber)", CONFIRMED: "var(--green)",
                  STANDBY: "var(--grey)", "NOT SOLVED": "var(--grey)" };
@@ -146,9 +409,185 @@ function ordinal(n) {
   const s = (n % 100 >= 11 && n % 100 <= 13) ? "th" : ({ 1: "st", 2: "nd", 3: "rd" }[n % 10] || "th");
   return n + s;
 }
+let toastTimer = 0;
 function toast(text) {
   const t = $("toast"); t.textContent = text; t.classList.add("show");
-  setTimeout(() => t.classList.remove("show"), 3200);
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove("show"), 3600);
+}
+
+// ---------------------------------------------------------------------------
+//  Sound (made in the browser, no files) and vibration
+// ---------------------------------------------------------------------------
+const Snd = {
+  ctx: null, on: store.get("sound", "1") === "1", siren: null,
+  unlock() {
+    try {
+      if (!this.ctx) {
+        const C = window.AudioContext || window.webkitAudioContext;
+        if (!C) return;
+        this.ctx = new C();
+      }
+      if (this.ctx.state === "suspended") this.ctx.resume();
+    } catch (e) { /* no sound */ }
+    updateSoundChip();
+  },
+  ready() { return this.on && this.ctx && this.ctx.state === "running"; },
+  tone(f, at, dur, type, vol, f2) {
+    const c = this.ctx, t = c.currentTime + at;
+    const o = c.createOscillator(), g = c.createGain();
+    o.type = type || "sine";
+    o.frequency.setValueAtTime(f, t);
+    if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + dur);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(vol || 0.2, t + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g).connect(c.destination);
+    o.start(t); o.stop(t + dur + 0.05);
+  },
+  play(kind) {
+    if (!this.ready()) return;
+    const T = (f, at, d, ty, v, f2) => this.tone(f, at, d, ty, v, f2);
+    switch (kind) {
+      case "ping": T(1318, 0, .18, "sine", .16); T(1760, .09, .3, "sine", .12); break;
+      case "reject": T(220, 0, .22, "square", .12); T(185, .26, .4, "square", .12); break;
+      case "success": [523, 659, 784, 1047].forEach((f, i) => T(f, i * .12, i === 3 ? .7 : .2, "triangle", .2)); break;
+      case "confirm": T(784, 0, .16, "triangle", .18); T(1047, .14, .45, "triangle", .18); break;
+      // master alarm: bursts of short, high beeps over a low pulse (like mission control)
+      case "alarm": for (let b = 0; b < 3; b++) { this.burst(b * .88, 4); } break;
+      case "thud": T(70, 0, 1.6, "sine", .5, 32); T(140, 0, .5, "triangle", .12, 60); break;
+      case "start": for (let b = 0; b < 2; b++) { this.burst(b * .85, 4); } T(46, 0, 2.4, "sine", .25); break;
+    }
+  },
+  // one burst: n beeps of a clean high tone (1975 Hz) and a low pulse
+  burst(at, n, vol) {
+    for (let k = 0; k < n; k++) this.tone(1975, at + k * .14, .085, "sine", vol || .13);
+    this.tone(58, at, .25, "sine", .3);
+  },
+  // the last 90 seconds: three beeps every second, until the burn or the impact
+  sirenOn() {
+    if (this.siren || !this.ready()) return;
+    const tick = () => { if (this.siren && this.ready()) this.burst(0, 3, .09); };
+    this.siren = setInterval(tick, 1000);
+    tick();
+  },
+  sirenOff() {
+    if (!this.siren) return;
+    clearInterval(this.siren);
+    this.siren = null;
+  }
+};
+function buzz(pattern) { try { if (navigator.vibrate) navigator.vibrate(pattern); } catch (e) { /* no vibration */ } }
+function updateSoundChip() {
+  const b = $("sound");
+  b.hidden = !myTeam;
+  const needsTap = Snd.on && (!Snd.ctx || Snd.ctx.state !== "running");
+  b.setAttribute("aria-pressed", String(Snd.on));
+  b.classList.toggle("wake", needsTap);
+  b.textContent = !Snd.on ? "Sound off" : (needsTap ? "Tap for sound" : "Sound on");
+}
+$("sound").addEventListener("click", () => {
+  const needsTap = Snd.on && (!Snd.ctx || Snd.ctx.state !== "running");
+  if (!needsTap) { Snd.on = !Snd.on; store.set("sound", Snd.on ? "1" : "0"); }
+  Snd.unlock();
+  if (Snd.on) Snd.play("ping"); else Snd.sirenOff();
+  updateSoundChip(); updateSiren();
+});
+// browsers only allow sound after a touch: the first one anywhere switches it on
+document.addEventListener("pointerdown", () => { if (myTeam) { Snd.unlock(); keepAwake(); updateSiren(); } }, { capture: true });
+
+// keep the screen on while the page is open (otherwise the phone sleeps and misses the news)
+let wake = null;
+async function keepAwake() {
+  try { if (!wake && myTeam && "wakeLock" in navigator && document.visibilityState === "visible") {
+    wake = await navigator.wakeLock.request("screen");
+    wake.addEventListener("release", () => { wake = null; });
+  } } catch (e) { wake = null; }
+}
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") { keepAwake(); pollLatest(); }
+});
+
+// ---------------------------------------------------------------------------
+//  Big messages
+// ---------------------------------------------------------------------------
+let alertTimer = 0;
+function showAlert(color, kick, big, sub, seconds, blink) {
+  const a = $("alert");
+  a.style.setProperty("--c", color);
+  $("alKick").textContent = kick; $("alBig").textContent = big; $("alSub").textContent = sub || "";
+  a.classList.toggle("blink", !!blink);
+  a.hidden = false;
+  clearTimeout(alertTimer);
+  alertTimer = setTimeout(() => { a.hidden = true; }, (seconds || 6) * 1000);
+}
+$("alert").addEventListener("click", () => { $("alert").hidden = true; });
+
+// what happened at mission control (new events only, never older than a minute)
+function present(e) {
+  const mine = myTeam && e.n === myTeam;
+  const who = e.t || "A team";
+  switch (e.k) {
+    case "reject":
+      if (mine) { showAlert("var(--red)", "Mission control", "Code rejected", "Your console is locked for " + (e.lock || 30) + " seconds. Check your clues and try again.", 7); Snd.play("reject"); buzz([220, 120, 220]); }
+      else { toast(who + " tried a code: rejected"); Snd.play("ping"); }
+      break;
+    case "success":
+      if (mine) { showAlert("var(--green)", "Burn code accepted", "You saved them!", "JWST and Euclid are safe. Your team is the flight director.", 10); Snd.play("success"); buzz([120, 60, 120, 60, 400]); }
+      else { showAlert("var(--green)", "Collision avoided", who + " made it", "They uploaded the burn code first. Crack the code too for a place in the ranking.", 8); Snd.play("confirm"); buzz(200); }
+      break;
+    case "confirm":
+      if (mine) { showAlert("var(--green)", "Burn confirmed", ordinal(e.rank || 0) + " place", "Your code was right as well.", 7); Snd.play("success"); buzz([120, 60, 300]); }
+      else { toast(who + " cracked the code (" + ordinal(e.rank || 0) + ")"); Snd.play("ping"); }
+      break;
+    case "late":
+      if (mine) { showAlert("var(--amber)", "Correct code", "Too late", "The telescopes had already collided. You still get " + ordinal(e.rank || 0) + " place.", 7); Snd.play("confirm"); buzz(200); }
+      else { toast(who + " cracked the code, after the impact"); Snd.play("ping"); }
+      break;
+    case "warn":
+      if (e.min >= 30) {
+        showAlert("var(--amber)", "Reminder", e.min + " minutes to impact", "JWST and Euclid are still on collision course. Find the burn code!", 7);
+        Snd.play("start"); buzz([200, 100, 200]);
+      } else {
+        showAlert("var(--red)", "Warning", e.min + (e.min === 1 ? " minute" : " minutes") + " to impact", "Find the burn code!", 6, true);
+        Snd.play("alarm"); buzz([300, 150, 300, 150, 300]);
+      }
+      break;
+    case "final":
+      showAlert("var(--red)", "Final approach", (e.sec || 90) + " seconds", "Last chance for the burn code.", 5, true);
+      Snd.play("alarm"); buzz([500, 200, 500]);
+      break;
+    case "collision":
+      showAlert("var(--red)", "Impact", "JWST and Euclid collided", "Codes still count for the ranking.", 9);
+      Snd.sirenOff(); Snd.play("thud"); buzz(900);
+      break;
+    case "start":
+      showAlert("var(--red)", "Conjunction alert", "The countdown has started", (e.min || 60) + " minutes until JWST and Euclid collide. Find the burn code!", 7, true);
+      Snd.play("start"); buzz([200, 100, 200]);
+      break;
+    case "reset": toast("Mission control reset the game"); break;
+    case "end": toast("The hunt is closed: see the ranking"); Snd.play("ping"); break;
+  }
+}
+function takeEvents(p) {
+  const s = p.state, evs = s.events || [];
+  const top = evs.reduce((m, e) => Math.max(m, e.id || 0), 0);
+  const boot = s.boot || 0;
+  if (lastEvent === null) {
+    // first news after opening the page: nothing old is replayed
+    const known = store.get("ev", "");
+    const [b, id] = known.split(":").map(Number);
+    lastBoot = boot; lastEvent = (b === boot && id <= top) ? id : top;
+  }
+  if (boot !== lastBoot || top < lastEvent) { lastBoot = boot; lastEvent = top; }
+  const fresh = evs.filter(e => e.id > lastEvent).sort((a, b) => a.id - b.id);
+  lastEvent = Math.max(lastEvent, top);
+  store.set("ev", boot + ":" + lastEvent);
+  const age = Date.now() - p.sent;             // time the message spent on the way
+  for (const e of fresh) {
+    const old = (s.now != null && e.ms != null) ? (s.now - e.ms) + age : 0;
+    if (old < 60000) present(e);
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -164,14 +603,16 @@ function handle(ntfyMsg, live) {
     shift = Math.abs(d) > 3000 ? d - 300 : 0;
   }
   lastMsgAt = Date.now();
-  if (p.test) { toast("Test message from mission control received"); }
+  if (p.test) { toast("Test message from mission control received"); Snd.play("ping"); }
   if (!p.state || p.sent < lastSent) return;
   lastSent = p.sent;
   P = p;
+  takeEvents(p);
   render();
 }
 
 async function pollLatest() {
+  if (!game) return;
   try {
     const r = await fetch(NTFY + "/" + encodeURIComponent(game) + "/json?poll=1&since=latest", { cache: "no-store" });
     const text = await r.text();
@@ -181,12 +622,24 @@ async function pollLatest() {
   updateLive();
 }
 
-let es = null;
+let es = null, polling = 0;
+// one connection for the news of mission control and (once joined) the team log
 function listen() {
-  if (!("EventSource" in window)) { setInterval(pollLatest, 15000); return; }
-  es = new EventSource(NTFY + "/" + encodeURIComponent(game) + "/sse");
-  es.onopen = () => { pollLatest(); updateLive(); };
-  es.onmessage = ev => { try { handle(JSON.parse(ev.data), true); } catch (e) { /* skip */ } updateLive(); };
+  if (!("EventSource" in window)) {
+    if (!polling) polling = setInterval(() => { pollLatest(); Log.history(); }, 15000);
+    return;
+  }
+  if (es) { try { es.close(); } catch (e) { /* closed */ } }
+  const topics = encodeURIComponent(game) + (Log.topic ? "," + encodeURIComponent(Log.topic) : "");
+  es = new EventSource(NTFY + "/" + topics + "/sse");
+  es.onopen = () => { pollLatest(); updateLive(); Log.flush(); };
+  es.onmessage = ev => {
+    try {
+      const m = JSON.parse(ev.data);
+      if (Log.topic && m.topic === Log.topic) Log.receive(m); else handle(m, true);
+    } catch (e) { /* skip */ }
+    updateLive();
+  };
   es.onerror = () => updateLive();
 }
 
@@ -196,6 +649,13 @@ function updateLive() {
   const fresh = Date.now() - lastMsgAt < 150000;
   el.className = "live " + (open && (fresh || !P) ? "on" : "off");
   $("liveTxt").textContent = open ? (P ? "Live" : "Connected") : "Reconnecting";
+}
+
+function updateSiren() {
+  const s = P && P.state;
+  const on = !!(s && s.siren && s.phase === "running" && !s.paused);
+  document.body.classList.toggle("siren", on);
+  if (on && Snd.on) Snd.sirenOn(); else Snd.sirenOff();
 }
 
 // ---------------------------------------------------------------------------
@@ -214,7 +674,7 @@ function clockNow() {
     case "standby": return { label: "Countdown ready", text: fmt(s.duration), sub: "The countdown starts at mission control." };
     case "running": {
       const r = (P.endsAt - now) / 1000;
-      return { label: "Time to conjunction", text: fmt(r), sub: r < 60 ? "Last minute!" : "JWST and Euclid are on a collision course. Find the burn code." };
+      return { label: "Time to conjunction", text: fmt(r), sub: r < 90 ? "Final approach! Last chance for the burn code." : "JWST and Euclid are on a collision course. Find the burn code." };
     }
     case "saved": {
       const r = P.closesAt ? (P.closesAt - now) / 1000 : 0;
@@ -237,7 +697,7 @@ function tick() {
   const s = P && P.state;
   if (s && s.phase === "running" && !s.paused) {
     const r = (P.endsAt - (Date.now() - shift)) / 1000;
-    $("clock").style.color = r <= 60 ? "var(--red)" : (r <= 600 ? "var(--amber)" : "var(--text)");
+    $("clock").style.color = r <= 90 ? "var(--red)" : (r <= 600 ? "var(--amber)" : "var(--text)");
   } else {
     $("clock").style.color = s ? ({ saved: "var(--green)", lost: "var(--red)", ended: "var(--dim)" }[s.phase] || "var(--text)") : "var(--dim)";
   }
@@ -261,6 +721,44 @@ function tick() {
   updateLive();
 }
 
+// joining a team needs its passcode
+let joining = 0;
+function askPass(t) {
+  joining = t.n;
+  $("passTeam").textContent = t.name;
+  $("passIn").value = ""; $("passErr").textContent = ""; $("passIn").classList.remove("bad");
+  $("passSheet").hidden = false;
+  Snd.unlock();
+  setTimeout(() => $("passIn").focus(), 50);
+}
+function tryJoin() {
+  const code = $("passIn").value.replace(/\D/g, "");
+  if (code.length < 4) { $("passErr").textContent = "The passcode has four digits."; return; }
+  if (!passOk(joining, code)) {
+    $("passErr").textContent = "Wrong passcode. Ask the staff.";
+    const el = $("passIn"); el.classList.remove("bad"); void el.offsetWidth; el.classList.add("bad");
+    el.value = "";
+    buzz(150);
+    return;
+  }
+  myTeam = joining; picking = false;
+  store.set("team", String(myTeam)); store.set("pass", code);
+  $("passSheet").hidden = true;
+  Snd.unlock(); Snd.play("confirm");
+  keepAwake();
+  if (P) render();
+  updateSoundChip(); updateSiren();
+  toast("You joined " + $("passTeam").textContent);
+  Log.start();
+}
+$("passIn").addEventListener("input", () => {
+  $("passErr").textContent = "";
+  if ($("passIn").value.replace(/\D/g, "").length === 4) tryJoin();
+});
+$("passIn").addEventListener("keydown", e => { if (e.key === "Enter") tryJoin(); });
+$("passOk").addEventListener("click", tryJoin);
+$("passCancel").addEventListener("click", () => { $("passSheet").hidden = true; });
+
 function render() {
   const s = P.state;
   $("title").textContent = TITLES[s.phase] || s.phase;
@@ -282,7 +780,7 @@ function render() {
   }
   // my team
   const teams = s.teams || [];
-  if (myTeam && !teams.find(t => t.n === myTeam)) myTeam = 0;
+  if (myTeam && teams.length && !teams.find(t => t.n === myTeam)) myTeam = 0;
   const showPicker = picking || !myTeam;
   $("pickBox").hidden = !showPicker;
   $("meCard").hidden = showPicker;
@@ -290,10 +788,8 @@ function render() {
   pk.innerHTML = "";
   for (const t of teams) {
     const b = document.createElement("button");
-    b.innerHTML = "<b></b><span></span>";
-    b.querySelector("b").textContent = t.n;
-    b.querySelector("span").textContent = t.name;
-    b.addEventListener("click", () => { myTeam = t.n; store.set("team", String(t.n)); picking = false; render(); });
+    b.textContent = t.name;
+    b.addEventListener("click", () => askPass(t));
     pk.appendChild(b);
   }
   if (!teams.length) pk.innerHTML = '<div class="sub">The teams appear here once mission control has set them up.</div>';
@@ -311,8 +807,10 @@ function render() {
       meta += ". Wrong codes lock your console for a short time.";
     }
     $("meMeta").textContent = meta;
+    $("meKey").innerHTML = "At mission control, press <b></b> and type the code.";
+    $("meKey").querySelector("b").textContent = String(me.n);
   }
-  // all teams (sorted by result once someone solved it)
+  // all teams (sorted by result once someone solved it; no numbers here)
   const rows = teams.slice();
   if (s.phase === "ended" || s.phase === "saved" || s.phase === "lost") {
     rows.sort((a, b) => (b.solved - a.solved) || (a.solved ? a.time - b.time : a.n - b.n));
@@ -322,7 +820,7 @@ function render() {
   for (const t of rows) {
     const tr = document.createElement("tr");
     if (t.n === myTeam) tr.className = "mine";
-    const cells = [["n", t.n], ["nm", t.name], ["st", t.solved ? (t.director ? "DIRECTOR" : (t.late ? "LATE" : "CONFIRMED")) + " " + fmt(t.time) : t.status]];
+    const cells = [["nm", t.name], ["st", t.solved ? (t.director ? "DIRECTOR" : (t.late ? "LATE" : "CONFIRMED")) + " " + fmt(t.time) : t.status]];
     for (const [cls, txt] of cells) {
       const td = document.createElement("td"); td.className = cls; td.textContent = txt; tr.appendChild(td);
     }
@@ -340,20 +838,26 @@ function render() {
     li.lastChild.textContent = e.text;
     feed.appendChild(li);
   }
+  updateSoundChip();
+  updateSiren();
   tick();
+  Log.draw();
 }
 
-$("changeTeam").addEventListener("click", () => { picking = true; if (P) render(); });
+$("changeTeam").addEventListener("click", () => { picking = true; if (P) render(); else Log.draw(); });
 
 if (!game) {
   $("main").hidden = true;
   $("noGame").hidden = false;
   $("live").hidden = true;
 } else {
+  updateSoundChip();
   pollLatest();
   listen();
+  if (myTeam) Log.start();
   setInterval(tick, 250);
   setInterval(() => { if (Date.now() - lastMsgAt > 75000) pollLatest(); }, 30000);
+  setInterval(() => Log.flush(), 20000);
 }
 </script>
 </body>
