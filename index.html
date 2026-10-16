@@ -69,6 +69,38 @@
   .banner { border: 1px solid currentColor; padding: 16px; margin-top: 16px; text-align: center; }
   .banner .big { font: 700 22px/1.2 var(--sans); letter-spacing: .08em; text-transform: uppercase; }
   .banner .who { font: 700 20px/1.2 var(--mono); color: var(--text); margin-top: 8px; }
+  /* messages typed by the staff at mission control */
+  .msgs { margin-top: 16px; border: 1px solid var(--cyan); background: color-mix(in srgb, var(--cyan) 7%, #000);
+          padding: 14px 16px; }
+  .msgs .label { color: var(--cyan); }
+  .msgs ul { list-style: none; margin: 8px 0 0; padding: 0; }
+  .msgs li { padding: 8px 0; border-top: 1px solid #12303f; font: 700 17px/1.4 var(--sans); overflow-wrap: anywhere; }
+  .msgs li:first-child { border-top: 0; padding-top: 2px; }
+  .msgs li span { display: block; color: var(--dim); font: 400 12px/1.3 var(--mono); margin-bottom: 3px; }
+  .msgs li.old { color: var(--dim); font-size: 15px; }
+  .alert-big.long { font-size: clamp(20px, 6.4vw, 28px); line-height: 1.25; text-transform: none; letter-spacing: .01em; }
+  /* staff view: every team's log (the code so far, notes) */
+  .cmp { width: 100%; margin-top: 12px; background: #000; color: var(--text); border: 1px solid var(--rule); border-radius: 0;
+         font: 700 18px/1.2 var(--mono); letter-spacing: .14em; text-transform: uppercase; padding: 12px; -webkit-appearance: none; }
+  .cmp::placeholder { font: 400 14px/1.2 var(--sans); letter-spacing: .02em; text-transform: none; color: var(--dim); }
+  .board { display: grid; gap: 10px; margin-top: 12px; }
+  .tcard { background: var(--panel); border: 1px solid var(--rule); padding: 12px 14px; }
+  .tcard .hd { display: flex; align-items: center; gap: 10px; }
+  .tcard .no { font: 700 13px/1 var(--mono); border: 1px solid var(--dim); padding: 3px 6px; }
+  .tcard .nm { font: 700 17px/1.2 var(--mono); flex: 1; min-width: 0; overflow-wrap: anywhere; }
+  .tcard .st { font: 700 13px/1.2 var(--mono); white-space: nowrap; text-align: right; }
+  .tcard .st small { display: block; color: var(--dim); font: 400 11px/1.3 var(--mono); }
+  .tcard .code { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 10px; align-items: center; }
+  .tcard .code b { font: 700 20px/1 var(--mono); min-width: 1.2em; text-align: center; padding: 6px 3px; border: 1px solid var(--rule); background: #000; }
+  .tcard .code b.ok { border-color: var(--green); color: var(--green); }
+  .tcard .code b.no { border-color: #5a211c; color: var(--red); }
+  .tcard .code b.gap { color: var(--dim); }
+  .tcard .score { margin-left: 6px; font: 700 11px/1.2 var(--sans); letter-spacing: .12em; text-transform: uppercase; color: var(--dim); }
+  .tcard .score.full { color: var(--green); }
+  .tcard .meta3 { color: var(--dim); font: 400 12px/1.4 var(--sans); margin-top: 7px; }
+  .tcard ul { list-style: none; margin: 8px 0 0; padding: 0; }
+  .tcard li { border-top: 1px solid #0e1c27; padding: 7px 0; font: 400 14px/1.4 var(--sans); overflow-wrap: anywhere; white-space: pre-wrap; }
+  .tcard li span { display: block; color: var(--dim); font: 700 10.5px/1.3 var(--sans); letter-spacing: .12em; text-transform: uppercase; white-space: normal; }
   .empty { padding: 40px 0; text-align: center; color: var(--dim); font: 400 16px/1.5 var(--sans); }
   .toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(18px + env(safe-area-inset-bottom, 0px));
            width: max-content; max-width: calc(100% - 36px); background: #0c1a24; border: 1px solid var(--cyan);
@@ -129,7 +161,7 @@
 </head>
 <body>
 <div class="top">
-  <div class="eyebrow">IMPRS Garching &middot; Flight Control</div>
+  <div class="eyebrow" id="eyebrow">IMPRS Garching &middot; Flight Control</div>
   <div class="tools">
     <button class="chip" id="sound" aria-pressed="true" hidden>Sound on</button>
     <div class="live" id="live"><i></i><span id="liveTxt">Connecting</span></div>
@@ -148,7 +180,21 @@
   <div class="sub" id="clockSub">The countdown starts at mission control.</div>
 
   <div id="bannerBox"></div>
+  <section class="msgs" id="msgBox" hidden>
+    <div class="label" id="msgLabel">Message from mission control</div>
+    <ul id="msgList"></ul>
+  </section>
 
+  <section id="staffBox" hidden>
+    <hr class="rule">
+    <div class="label">Team progress &middot; staff view</div>
+    <p class="sub">What each team saved in its team log: the code so far and the notes, as they come in. Only this staff link can read them: keep it to yourself.</p>
+    <input class="cmp" id="cmpIn" maxlength="16" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false"
+           placeholder="Burn code to compare (stays on this device)" aria-label="Burn code to compare">
+    <div class="board" id="board"></div>
+  </section>
+
+  <div id="teamArea">
   <hr class="rule">
   <div class="label">Your team</div>
   <div class="card me" id="meCard" hidden>
@@ -161,6 +207,7 @@
   <div id="pickBox">
     <div class="sub">Pick your team and type its passcode (from the staff). Your codes are typed at mission control; this page shows how your team is doing.</div>
     <div class="picker" id="picker"></div>
+  </div>
   </div>
 
   <section id="logBox" hidden>
@@ -184,14 +231,16 @@
     </div>
   </section>
 
+  <div id="allArea">
   <hr class="rule">
   <div class="label">All teams</div>
   <table class="teams" id="teams"></table>
+  </div>
 
   <hr class="rule">
   <div class="label">Mission log</div>
   <ul class="feed" id="feed"></ul>
-  <p class="sub" style="margin-top:18px">Keep this page open with the sound on: it beeps when a team tries a code and sounds the alarms of mission control. Times in the log count from the start of the countdown.</p>
+  <p class="sub" style="margin-top:18px" id="footNote">Keep this page open with the sound on: it beeps when a team tries a code and sounds the alarms of mission control. Times in the log count from the start of the countdown.</p>
 </main>
 
 <div class="sheet" id="passSheet" hidden>
@@ -222,7 +271,7 @@
 "use strict";
 const NTFY = "https://ntfy.sh";
 // team passcodes (as hashes: the staff hand them out with the team numbers)
-const PASS = {"1": "dbb4c964", "2": "c72e484f", "3": "8921a925", "4": "88b0e814", "5": "1db7c876"};
+const PASS = {"1": "dbb4c964", "2": "c72e484f", "3": "8921a925", "4": "88b0e814", "5": "1db7c876", "6": "29e2cbb0", "7": "6572f0e2", "8": "107e97a7", "9": "c471dae9"};
 const params = new URLSearchParams(location.search);
 const hashParams = new URLSearchParams(location.hash.replace(/^#/, ""));
 const game = (params.get("g") || hashParams.get("g") || "").replace(/[^A-Za-z0-9_-]/g, "");
@@ -252,6 +301,26 @@ function clockOf(ms) {
   return String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
 }
 function rid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
+async function logKey(n, pass) {
+  const raw = await crypto.subtle.digest("SHA-256", enc.encode("imprs-l2-log-key:" + game + ":" + n + ":" + pass));
+  return crypto.subtle.importKey("raw", raw, "AES-GCM", false, ["encrypt", "decrypt"]);
+}
+function logTopic(n, pass) { return game + "-n" + fnv("imprs-l2-log:" + game + ":" + n + ":" + pass); }
+async function unsealWith(key, text) {
+  const m = JSON.parse(text);
+  if (!m || m.v !== 2) return null;
+  const pt = await crypto.subtle.decrypt({ name: "AES-GCM", iv: unb64(m.iv) }, key, unb64(m.ct));
+  return JSON.parse(dec.decode(pt));
+}
+// one entry of a team log: a note, a deleted note, or the code so far
+function applyEntry(st, e) {
+  if (!e || !e.k) return false;
+  const by = String(e.by || "").slice(0, 14), at = Number(e.at) || 0;
+  if (e.k === "note" && e.id && !st.notes[e.id]) { st.notes[e.id] = { t: String(e.t || "").slice(0, 400), by, at }; return true; }
+  if (e.k === "del" && e.id && !st.del[e.id]) { st.del[e.id] = 1; return true; }
+  if (e.k === "code" && (!st.code || at > st.code.at)) { st.code = { t: String(e.t || "").slice(0, 16), by, at }; return true; }
+  return false;
+}
 const Log = {
   team: 0, topic: "", key: null, shared: false, notes: {}, del: {}, code: null, pending: [], armed: null,
   cacheKey() { return "log" + this.team; },
@@ -260,7 +329,7 @@ const Log = {
     if (!myTeam || !pass) { this.draw(); return; }
     if (this.team === myTeam && this.topic) { this.draw(); return; }
     this.team = myTeam;
-    this.topic = game + "-n" + fnv("imprs-l2-log:" + game + ":" + myTeam + ":" + pass);
+    this.topic = logTopic(myTeam, pass);
     this.notes = {}; this.del = {}; this.code = null; this.pending = []; this.key = null;
     try {
       const c = JSON.parse(store.get(this.cacheKey(), "{}"));
@@ -268,10 +337,7 @@ const Log = {
     } catch (e) { /* nothing kept yet */ }
     this.shared = !!(window.crypto && crypto.subtle && window.fetch);
     if (this.shared) {
-      try {
-        const raw = await crypto.subtle.digest("SHA-256", enc.encode("imprs-l2-log-key:" + game + ":" + myTeam + ":" + pass));
-        this.key = await crypto.subtle.importKey("raw", raw, "AES-GCM", false, ["encrypt", "decrypt"]);
-      } catch (e) { this.shared = false; }
+      try { this.key = await logKey(myTeam, pass); } catch (e) { this.shared = false; }
     }
     this.draw();
     if (this.shared) { listen(); await this.history(); this.flush(); }
@@ -282,20 +348,8 @@ const Log = {
     const ct = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, this.key, enc.encode(JSON.stringify(obj)));
     return JSON.stringify({ v: 2, iv: b64(iv), ct: b64(ct) });
   },
-  async unseal(text) {
-    const m = JSON.parse(text);
-    if (!m || m.v !== 2) return null;
-    const pt = await crypto.subtle.decrypt({ name: "AES-GCM", iv: unb64(m.iv) }, this.key, unb64(m.ct));
-    return JSON.parse(dec.decode(pt));
-  },
-  apply(e) {
-    if (!e || !e.k) return false;
-    const by = String(e.by || "").slice(0, 14), at = Number(e.at) || 0;
-    if (e.k === "note" && e.id && !this.notes[e.id]) { this.notes[e.id] = { t: String(e.t || "").slice(0, 400), by, at }; return true; }
-    if (e.k === "del" && e.id && !this.del[e.id]) { this.del[e.id] = 1; return true; }
-    if (e.k === "code" && (!this.code || at > this.code.at)) { this.code = { t: String(e.t || "").slice(0, 16), by, at }; return true; }
-    return false;
-  },
+  unseal(text) { return unsealWith(this.key, text); },
+  apply(e) { return applyEntry(this, e); },
   async receive(msg) {
     if (!this.key || !msg || msg.event !== "message" || !msg.message) return;
     try { if (this.apply(await this.unseal(msg.message))) { this.save(); this.draw(); } } catch (e) { /* not for this team */ }
@@ -369,6 +423,116 @@ const Log = {
       : "This browser cannot share the log: your notes stay on this phone only.";
   }
 };
+
+// ---------------------------------------------------------------------------
+//  Staff view: the relay page's staff link carries the passcodes after "#" (never sent
+//  to any server). With them this page reads every team's log, to see who is close.
+// ---------------------------------------------------------------------------
+const STAFF = (hashParams.get("staff") || "").split(/[-.,]/).filter(x => /^\d{4}$/.test(x));
+const staffMode = STAFF.length > 0 && !!(window.crypto && crypto.subtle);
+const Board = {
+  teams: [], byTopic: {}, open: {},
+  async start() {
+    for (let i = 0; i < STAFF.length; i++) {
+      const n = i + 1;
+      const t = { n, topic: logTopic(n, STAFF[i]), key: await logKey(n, STAFF[i]), code: null, notes: {}, del: {} };
+      this.teams.push(t); this.byTopic[t.topic] = t;
+    }
+    listen();
+    await this.history();
+  },
+  topics() { return this.teams.map(t => t.topic); },
+  async receive(m) {
+    const t = this.byTopic[m.topic];
+    if (!t || m.event !== "message" || !m.message) return;
+    try { if (applyEntry(t, await unsealWith(t.key, m.message))) this.draw(); } catch (e) { /* not readable */ }
+  },
+  async history() {
+    await Promise.all(this.teams.map(async t => {
+      try {
+        const r = await fetch(NTFY + "/" + encodeURIComponent(t.topic) + "/json?poll=1&since=all", { cache: "no-store" });
+        const lines = (await r.text()).trim().split("\n").filter(Boolean);
+        for (const l of lines) {
+          try { const m = JSON.parse(l); if (m.event === "message") applyEntry(t, await unsealWith(t.key, m.message)); } catch (e) { /* skip */ }
+        }
+      } catch (e) { /* offline: next time */ }
+    }));
+    this.draw();
+  },
+  draw() {
+    if (!staffMode) return;
+    const st = P && P.state, live = (st && st.teams) || [];
+    const cmp = $("cmpIn").value.toUpperCase().replace(/\s+/g, "");
+    const board = $("board");
+    board.innerHTML = "";
+    for (const t of this.teams) {
+      const info = live.find(x => x.n === t.n);
+      if (live.length && !info) continue;                 // a team that does not play
+      const card = document.createElement("div");
+      card.className = "tcard";
+      card.dataset.team = String(t.n);
+      card.innerHTML = '<div class="hd"><span class="no"></span><span class="nm"></span><span class="st"></span></div>' +
+                       '<div class="code"></div><div class="meta3"></div><ul></ul>';
+      card.querySelector(".no").textContent = String(t.n);
+      card.querySelector(".nm").textContent = info ? info.name : "Team " + t.n;
+      const stEl = card.querySelector(".st");
+      if (info) {
+        stEl.textContent = info.status || "";
+        stEl.style.color = statusColor(info.status, info.c);
+        const sm = document.createElement("small");
+        sm.textContent = info.tries + (info.tries === 1 ? " wrong try" : " wrong tries");
+        stEl.appendChild(sm);
+      }
+      const codeEl = card.querySelector(".code"), meta = card.querySelector(".meta3");
+      const code = (t.code && t.code.t) || "";
+      if (code) {
+        let right = 0;
+        const len = Math.max(code.length, cmp.length);
+        for (let i = 0; i < len; i++) {
+          const b = document.createElement("b");
+          const ch = code[i];
+          b.textContent = ch || "_";
+          if (cmp) {
+            if (ch === undefined || ch === "?" || ch === "_" || ch === "*") b.className = "gap";
+            else if (ch === cmp[i]) { b.className = "ok"; right++; }
+            else b.className = "no";
+          }
+          codeEl.appendChild(b);
+        }
+        if (cmp) {
+          const sc = document.createElement("span");
+          sc.className = "score" + (right === cmp.length ? " full" : "");
+          sc.textContent = right + " of " + cmp.length + " right";
+          codeEl.appendChild(sc);
+        }
+        meta.textContent = "Code saved by " + (t.code.by || "the team") + " at " + clockOf(t.code.at);
+      } else {
+        meta.textContent = "No code saved yet.";
+      }
+      const notes = Object.entries(t.notes).filter(([id]) => !t.del[id]).sort((a, b) => b[1].at - a[1].at);
+      const ul = card.querySelector("ul");
+      const shown = this.open[t.n] ? notes : notes.slice(0, 2);
+      for (const [, n] of shown) {
+        const li = document.createElement("li");
+        li.innerHTML = "<span></span>";
+        li.firstChild.textContent = (n.by || "Team") + " \u00b7 " + clockOf(n.at);
+        li.appendChild(document.createTextNode(n.t));
+        ul.appendChild(li);
+      }
+      if (notes.length > 2) {
+        const more = document.createElement("button");
+        more.className = "linkbtn"; more.type = "button";
+        more.textContent = this.open[t.n] ? "Show fewer notes" : "Show all " + notes.length + " notes";
+        more.addEventListener("click", () => { this.open[t.n] = !this.open[t.n]; this.draw(); });
+        card.appendChild(more);
+      }
+      if (!notes.length) meta.textContent += " No notes.";
+      board.appendChild(card);
+    }
+  }
+};
+$("cmpIn").addEventListener("input", () => Board.draw());
+
 $("codeSave").addEventListener("click", () => {
   const t = $("codeIn").value.toUpperCase().replace(/\s+/g, "").slice(0, 16);
   Log.post({ k: "code", t, by: store.get("name", ""), at: Date.now() });
@@ -393,12 +557,16 @@ if (myTeam && !passOk(myTeam, store.get("pass", ""))) myTeam = 0;
 let picking = false;
 let lastEvent = null, lastBoot = null;
 
-const COLORS = { READY: "var(--green)", UPLINK: "var(--amber)", DIRECTOR: "var(--amber)", CONFIRMED: "var(--green)",
-                 STANDBY: "var(--grey)", "NOT SOLVED": "var(--grey)" };
-function statusColor(s) {
+// the colour of a team's status: mission control sends it (flight director green, the other
+// teams amber once there is one, red for not solved at the end); older states only the text
+const CNAMES = { green: "var(--green)", amber: "var(--amber)", red: "var(--red)", dim: "var(--dim)", grey: "var(--grey)" };
+const COLORS = { READY: "var(--green)", UPLINK: "var(--amber)", DIRECTOR: "var(--green)", CONFIRMED: "var(--amber)",
+                 STANDBY: "var(--grey)", "NOT SOLVED": "var(--red)" };
+function statusColor(s, c) {
+  if (c && CNAMES[c]) return CNAMES[c];
   if (!s) return "var(--grey)";
   if (s.startsWith("LOCKED")) return "var(--red)";
-  if (s.startsWith("LATE")) return "var(--dim)";
+  if (s.startsWith("LATE")) return "var(--amber)";
   return COLORS[s] || "var(--dim)";
 }
 function fmt(sec) {
@@ -513,9 +681,11 @@ document.addEventListener("visibilitychange", () => {
 // ---------------------------------------------------------------------------
 let alertTimer = 0;
 function showAlert(color, kick, big, sub, seconds, blink) {
+  if (staffMode) { toast(kick + ": " + big); return; }
   const a = $("alert");
   a.style.setProperty("--c", color);
   $("alKick").textContent = kick; $("alBig").textContent = big; $("alSub").textContent = sub || "";
+  $("alBig").classList.toggle("long", big.length > 26);
   a.classList.toggle("blink", !!blink);
   a.hidden = false;
   clearTimeout(alertTimer);
@@ -564,6 +734,10 @@ function present(e) {
     case "start":
       showAlert("var(--red)", "Conjunction alert", "The countdown has started", (e.min || 60) + " minutes until JWST and Euclid collide. Find the burn code!", 7, true);
       Snd.play("start"); buzz([200, 100, 200]);
+      break;
+    case "msg":
+      showAlert("var(--cyan)", "Message from mission control", e.text || "", "", 15);
+      Snd.play("confirm"); buzz([150, 80, 150]);
       break;
     case "reset": toast("Mission control reset the game"); break;
     case "end": toast("The hunt is closed: see the ranking"); Snd.play("ping"); break;
@@ -626,17 +800,19 @@ let es = null, polling = 0;
 // one connection for the news of mission control and (once joined) the team log
 function listen() {
   if (!("EventSource" in window)) {
-    if (!polling) polling = setInterval(() => { pollLatest(); Log.history(); }, 15000);
+    if (!polling) polling = setInterval(() => { pollLatest(); Log.history(); if (staffMode) Board.history(); }, 15000);
     return;
   }
   if (es) { try { es.close(); } catch (e) { /* closed */ } }
-  const topics = encodeURIComponent(game) + (Log.topic ? "," + encodeURIComponent(Log.topic) : "");
+  const extra = staffMode ? Board.topics() : (Log.topic ? [Log.topic] : []);
+  const topics = [game].concat(extra).map(encodeURIComponent).join(",");
   es = new EventSource(NTFY + "/" + topics + "/sse");
-  es.onopen = () => { pollLatest(); updateLive(); Log.flush(); };
+  es.onopen = () => { pollLatest(); updateLive(); Log.flush(); if (staffMode) Board.history(); };
   es.onmessage = ev => {
     try {
       const m = JSON.parse(ev.data);
-      if (Log.topic && m.topic === Log.topic) Log.receive(m); else handle(m, true);
+      if (staffMode && Board.byTopic[m.topic]) Board.receive(m);
+      else if (Log.topic && m.topic === Log.topic) Log.receive(m); else handle(m, true);
     } catch (e) { /* skip */ }
     updateLive();
   };
@@ -797,8 +973,8 @@ function render() {
   if (me && !showPicker) {
     $("meName").textContent = me.name;
     $("meStatus").textContent = me.status || "";
-    $("meStatus").style.color = statusColor(me.status);
-    $("meLamp").style.background = statusColor(me.status);
+    $("meStatus").style.color = statusColor(me.status, me.c);
+    $("meLamp").style.background = statusColor(me.status, me.c);
     let meta = me.tries + (me.tries === 1 ? " wrong try" : " wrong tries");
     if (me.solved) {
       meta = me.director ? "You saved JWST and Euclid! Flight director." :
@@ -824,10 +1000,24 @@ function render() {
     for (const [cls, txt] of cells) {
       const td = document.createElement("td"); td.className = cls; td.textContent = txt; tr.appendChild(td);
     }
-    tr.lastChild.style.color = statusColor(t.solved ? (t.director ? "DIRECTOR" : "CONFIRMED") : t.status);
+    tr.lastChild.style.color = statusColor(t.solved ? (t.director ? "DIRECTOR" : (t.late ? "LATE" : "CONFIRMED")) : t.status, t.c);
     if (!t.solved && t.lock > 0) tr.lastChild.dataset.lock = String(t.lock);
     tb.appendChild(tr);
   }
+  // messages typed at mission control: the newest one big, two older ones below it
+  const msgs = (s.msgs || []).slice().reverse().slice(0, 3);
+  $("msgBox").hidden = !msgs.length;
+  $("msgLabel").textContent = msgs.length > 1 ? "Messages from mission control" : "Message from mission control";
+  const ml = $("msgList");
+  ml.innerHTML = "";
+  msgs.forEach((m, i) => {
+    const li = document.createElement("li");
+    if (i > 0) li.className = "old";
+    li.innerHTML = "<span></span>";
+    li.firstChild.textContent = m.met && m.met !== "--:--" ? "T+" + m.met : "Before the start";
+    li.appendChild(document.createTextNode(m.text));
+    ml.appendChild(li);
+  });
   // log
   const feed = $("feed");
   feed.innerHTML = "";
@@ -842,6 +1032,7 @@ function render() {
   updateSiren();
   tick();
   Log.draw();
+  Board.draw();
 }
 
 $("changeTeam").addEventListener("click", () => { picking = true; if (P) render(); else Log.draw(); });
@@ -850,6 +1041,18 @@ if (!game) {
   $("main").hidden = true;
   $("noGame").hidden = false;
   $("live").hidden = true;
+} else if (staffMode) {
+  // the staff view: no team of its own, silent, every team's log
+  myTeam = 0; Snd.on = false;
+  $("teamArea").hidden = true; $("allArea").hidden = true; $("staffBox").hidden = false;
+  $("eyebrow").textContent = "IMPRS Garching \u00b7 Flight Control \u00b7 staff view";
+  document.title = "L2 staff view";
+  $("footNote").textContent = "The staff view is silent and updates by itself while it is open. Times in the log count from the start of the countdown.";
+  updateSoundChip();
+  pollLatest();
+  Board.start();
+  setInterval(tick, 250);
+  setInterval(() => { if (Date.now() - lastMsgAt > 75000) pollLatest(); }, 30000);
 } else {
   updateSoundChip();
   pollLatest();
